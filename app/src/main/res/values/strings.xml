@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Drafts</string>
+
+    <string name="tab_compose">Compose</string>
+    <string name="tab_check">Check</string>
+    <string name="tab_tests">Tests</string>
+    <string name="tab_scripts">Scripts</string>
+
+    <!-- Compose -->
+    <string name="section_headline">HEADLINE</string>
+    <string name="section_body">BODY</string>
+    <string name="section_platform">PLATFORM</string>
+    <string name="section_output">OUTPUT</string>
+    <string name="hint_headline_name">Name</string>
+    <string name="hint_headline_category">Category</string>
+    <string name="hint_headline_filter">Filter</string>
+    <string name="hint_body_who">Who you are</string>
+    <string name="hint_body_how">How it works</string>
+    <string name="hint_body_contact">Contact</string>
+    <string name="copy_headline">COPY HEADLINE</string>
+    <string name="copy_body">COPY BODY</string>
+    <string name="copy_all">COPY FULL</string>
+    <string name="new_listing">New draft</string>
+    <string name="rename_listing">Rename draft</string>
+    <string name="delete_listing">Delete draft</string>
+    <string name="edit_platform">Edit platform</string>
+    <string name="listing_name">Draft name</string>
+    <string name="delete_listing_confirm">Delete this draft? The text in it goes with it.</string>
+
+    <!-- Check -->
+    <string name="check_clean">Nothing flagged.</string>
+    <string name="check_summary">%1$d block · %2$d warn</string>
+    <string name="canonical_values">Canonical values</string>
+    <string name="canonical_rate_qv">Rate · qv</string>
+    <string name="canonical_rate_hh">Rate · hh</string>
+    <string name="canonical_rate_hour">Rate · hour</string>
+    <string name="canonical_bio">Bio descriptor</string>
+    <string name="canonical_handle">Contact handle</string>
+    <string name="canonical_instruction">Contact instruction</string>
+    <string name="severity_block">BLOCK</string>
+    <string name="severity_warn">WARN</string>
+    <string name="whole_field">(not present anywhere in the draft)</string>
+
+    <!-- Tests -->
+    <string name="new_test">New test</string>
+    <string name="sort_by_date">Sorted by date</string>
+    <string name="sort_by_inquiries">Sorted by inquiries</string>
+    <string name="tests_empty">No tests recorded.</string>
+    <string name="end_test">End</string>
+    <string name="edit_count">Inquiries</string>
+    <string name="delete_test">Delete</string>
+    <string name="running">running</string>
+    <string name="inquiry_count">Inquiry count</string>
+    <string name="guard_title">Two variables changed</string>
+    <string name="guard_continue">Start it anyway</string>
+    <string name="guard_detail">Changed against the last test on %1$s: %2$s.</string>
+    <string name="delete_test_confirm">Delete this test record?</string>
+
+    <!-- Scripts -->
+    <string name="copy">COPY</string>
+    <string name="edit">Edit</string>
+    <string name="script_body">Script</string>
+
+    <!-- Shared -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="copied">Copied</string>
+    <string name="platform">Platform</string>
+    <string name="register">Register</string>
+    <string name="headline_char_limit">Headline character limit</string>
+    <string name="body_char_limit">Body character limit</string>
+    <string name="count_of_limit">%1$d / %2$d</string>
+    <string name="count_no_limit">%1$d</string>
+    <string name="over_by">over by %1$d</string>
+</resources>
