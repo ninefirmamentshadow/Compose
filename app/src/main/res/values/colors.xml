@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0E0F11</color>
+    <color name="surface">#16181C</color>
+    <color name="surface_raised">#1E2126</color>
+    <color name="outline">#2C3037</color>
+    <color name="on_surface">#E7E9EC</color>
+    <color name="on_surface_muted">#98A0AA</color>
+
+    <!-- Copy is the point of the app; it gets the one saturated colour. -->
+    <color name="accent">#39D07E</color>
+    <color name="on_accent">#06210F</color>
+
+    <color name="block">#FF6B6B</color>
+    <color name="block_dim">#3A1D1F</color>
+    <color name="warn">#FFB020</color>
+    <color name="warn_dim">#382C11</color>
+
+    <color name="highlight">#3A3320</color>
+</resources>
