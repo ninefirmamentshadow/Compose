@@ -112,6 +112,31 @@ class ConsistencyCheckerTest {
     }
 
     @Test
+    fun `a five-or-more-digit dollar amount is captured whole and flagged as a mismatch`() {
+        // Regression: explicitMoney's capture group used to cap at 4 digits with
+        // no upper bound, so "$12005" matched only "$1200" and was judged against
+        // that truncated value instead of the real one. It must capture the
+        // complete amount and report it against real canonical rates.
+        val findings = Fixtures.check(Fixtures.listing(who = "Total due is \$12005."), ratesOnly)
+            .forRule("RATE_MISMATCH")
+        assertEquals(1, findings.size)
+        assertEquals("\$12005", findings.first().excerpt)
+    }
+
+    @Test
+    fun `capturing the complete amount prevents a truncated false accept`() {
+        // The concrete failure mode of the old bug: if a canonical rate happened
+        // to equal a longer amount's first four digits, the truncated match made
+        // "$12005" against a canonical 1200 read as consistent. It must not.
+        val truncationRisk = ratesOnly.copy(rateQv = 1200)
+        val findings = Fixtures.check(
+            Fixtures.listing(who = "Total due is \$12005."),
+            truncationRisk
+        ).forRule("RATE_MISMATCH")
+        assertEquals(1, findings.size)
+    }
+
+    @Test
     fun `rates are not checked when no canonical rate is set`() {
         val none = CanonicalValues()
         assertTrue(Fixtures.check(Fixtures.listing(who = "Rate is 175 or \$999."), none).isEmpty())
@@ -230,6 +255,17 @@ class ConsistencyCheckerTest {
     fun `a handle in the headline counts as present`() {
         val listing = Fixtures.listing(filter = "@placeholder.handle")
         assertTrue(Fixtures.check(listing, handleOnly).isEmpty())
+    }
+
+    @Test
+    fun `a handle does not match as a substring inside an unrelated word`() {
+        // Regression: looseRegex had no word-boundary anchors, so canonical
+        // "@shop" matched the "shop" inside "bookshop" and was reported as
+        // CONTACT_HANDLE_DRIFT instead of correctly falling through to missing.
+        val listing = Fixtures.listing(contact = "Ask about the bookshop hours.")
+        val finding = Fixtures.check(listing, CanonicalValues(contactHandle = "@shop"))
+            .forRule("CONTACT_HANDLE_MISSING").single()
+        assertEquals(Severity.BLOCK, finding.severity)
     }
 
     @Test
