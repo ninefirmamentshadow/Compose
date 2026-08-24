@@ -13,6 +13,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # A hung Gradle daemon otherwise holds a runner for the six-hour default.
+    timeout-minutes: 45
 
     # Job-level so the signing steps can test for it in an `if:` — the secrets
     # context is not available in step conditions.
