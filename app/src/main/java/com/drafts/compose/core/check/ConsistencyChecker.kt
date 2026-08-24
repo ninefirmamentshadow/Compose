@@ -27,7 +27,13 @@ class ConsistencyChecker {
         RegexOption.IGNORE_CASE
     )
 
-    private val explicitMoney = Regex("[\\$£€]\\s?(\\d{1,4})(?:\\.\\d{2})?")
+    // \d+ (not \d{1,4}): the old cap silently truncated a longer amount to its
+    // first four digits and judged that truncated value instead of the real one
+    // ("$12005" read as "$1200"). Capturing the whole run means a canonical rate
+    // is compared against the complete stated amount and a wrong price is
+    // reported as a mismatch instead of going unevaluated or getting a lucky
+    // truncated match.
+    private val explicitMoney = Regex("[\\$£€]\\s?(\\d+)(?:\\.\\d{2})?")
 
     /**
      * A standalone 2–4 digit number. The lookarounds keep it off the fractional part
@@ -195,6 +201,9 @@ class ConsistencyChecker {
         } else {
             body
         }
-        return Regex(pattern, RegexOption.IGNORE_CASE)
+        // Bounded so the literal can't match as a substring of a longer, unrelated
+        // word ("@shop" inside "bookshop") and get reported as drift instead of
+        // correctly falling through to missing.
+        return Regex("(?<![\\w@])$pattern(?!\\w)", RegexOption.IGNORE_CASE)
     }
 }
