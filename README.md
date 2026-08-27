@@ -1,213 +1,196 @@
 # Drafts
 
-A multi-format text composition and consistency-checking tool.
+**Drafts** is an offline Android writing and consistency-checking tool for composing one source draft and rendering it into multiple platform formats without sending the text anywhere.
 
-You write one draft. The app renders it into each platform's shape, counts it
-against that platform's limits, checks it against a single row of canonical
-values, lints it against an editable rule set, and puts the result on the
-clipboard. That is the whole app.
+It is designed for fast mobile drafting, repeatable formatting, and catching obvious consistency mistakes before text is copied out of the app.
 
-Private repo. Sideloaded. Built in CI — there is no local build step in the
-normal workflow.
+[Download the current Android build](https://github.com/ninefirmamentshadow/Compose/releases/tag/compose-latest)
 
----
+> **Current release status:** the public release page always exposes an installable debug APK. Once release-signing secrets are configured, the same workflow also publishes the signed production APK.
 
-## What it does
+## Why Drafts exists
 
-**COMPOSE** — six source fields: three headline segments rendered live as
-`NAME | CATEGORY | FILTER`, and three body fields. Pick a platform; the same
-source re-renders into that platform's shape with a live character count that
-turns red past the limit. Three copy buttons: headline, body, full.
+A single piece of copy often gets rewritten repeatedly for different platforms, which creates drift: different numbers, different contact text, inconsistent descriptors, over-limit headlines, or edits that accidentally change more than one variable during a test.
 
-**CHECK** — two passes over the current draft, re-run on every keystroke.
-Each finding carries a severity (BLOCK / WARN), the exact offending substring,
-and the field it came from. Tap a finding to jump to that field with the text
-selected.
+Drafts keeps one source draft and performs the mechanical work locally on the device.
 
-- *Consistency* compares the draft against **canonical values** — three rates,
-  a bio descriptor, a contact handle, a contact instruction. A number that reads
-  as a rate but matches none of the canonical rates is a BLOCK. A descriptor
-  that appears but is not byte-identical is a WARN. A missing or drifted contact
-  handle is a BLOCK. Set the canonical values from the button at the top of the
-  tab; until they are set, the checker has nothing to compare against and stays
-  quiet.
-- *Lint* runs pattern rules. See [Editing the rules](#editing-the-rules).
+## Features
 
-**TESTS** — the headline kill-file. Every headline that ran, on which platform,
-over which dates, and how many inquiries came in. Sort by date or by inquiry
-count. Starting a test that changes more than one headline segment against the
-last test on that platform raises a blocking dialog — *two variables changed,
-this test won't tell you anything* — with continue/cancel.
+### Compose
 
-**SCRIPTS** — six labelled replies. Tap to copy, edit to reword. Nothing else.
+Six source fields: three headline segments rendered live as `NAME | CATEGORY | FILTER`, plus three body fields.
 
----
+Choose a platform and the same source re-renders into that platform's shape with a live character count. Copy the headline, body, or full rendered draft to the clipboard.
 
-## Editing the rules
+### Check
 
-All lint rules live in one file:
+Two checks run against the current draft:
 
-    app/src/main/java/com/drafts/compose/core/lint/LintRules.kt
+- **Consistency** compares rate-shaped numbers, a bio descriptor, a contact handle, and a contact instruction against the canonical values configured by the user.
+- **Lint** applies an editable rule set for mechanical writing and exposure checks.
 
-`LintRules.DEFAULT` is a plain list. Add an entry, delete an entry, change a
-regex, change a severity, change a message — the engine never needs touching,
-because it knows the four rule shapes and nothing about what any rule is for:
+Findings carry a severity, the offending substring, and the source field. Tapping a finding jumps back to the relevant text.
 
-| shape | flags |
+### Tests
+
+Tracks headline tests by platform, date range, and inquiry count. If a new test changes more than one headline segment relative to the previous test on that platform, Drafts warns that the result will not isolate a single variable.
+
+### Scripts
+
+Six locally stored labelled replies. Tap to copy; edit to rewrite.
+
+## Privacy and security model
+
+Drafts is intentionally small and local-first:
+
+- **No `INTERNET` permission.**
+- **No location permission.**
+- **No accounts, analytics, telemetry, ads, or cloud sync.**
+- **No auto-posting, platform APIs, or scraping.**
+- **No notifications or background alarms.**
+- **No seeded personal or client data.**
+- Clipboard copy is the only output path.
+- Android backup and cloud transfer are disabled in the manifest.
+
+The app is not an encrypted records vault. Draft text and configuration are stored locally in the app database, so device access remains the primary exposure boundary.
+
+## Install
+
+### Current public build
+
+Open the current release:
+
+**https://github.com/ninefirmamentshadow/Compose/releases/tag/compose-latest**
+
+Assets use these names:
+
+- `Drafts-current.apk` — signed production build when release signing is configured.
+- `Drafts-current-debug.apk` — installable debug build, always produced as the fallback.
+
+Android may ask you to allow installs from the browser or file manager opening the APK. The production package is `com.drafts.compose`; the debug package is `com.drafts.compose.debug`, so both can coexist on one device.
+
+## Editing the lint rules
+
+Rules live in:
+
+```text
+app/src/main/java/com/drafts/compose/core/lint/LintRules.kt
+```
+
+`LintRules.DEFAULT` is a plain list. The current engine supports:
+
+| Rule shape | Purpose |
 | --- | --- |
-| `PatternRule` | every match of one regex |
-| `SentencePairRule` | a sentence where two regexes both match |
-| `EmojiCeilingRule` | emoji past a per-scope budget |
-| `ParagraphCeilingRule` | paragraphs past a budget |
+| `PatternRule` | flag every match of one regex |
+| `SentencePairRule` | flag a sentence where two regexes both match |
+| `EmojiCeilingRule` | flag emoji above a per-scope budget |
+| `ParagraphCeilingRule` | flag paragraphs above a budget |
 
-Each rule is scoped to `HEADLINE`, `BODY`, or `ANY`. A rule shape that does not
-exist yet needs a new `LintRule` subtype and one `when` branch in `LintEngine`;
-that is the only coupling between rules and engine.
+Rules can be scoped to `HEADLINE`, `BODY`, or `ANY`.
 
-Shipped rules:
-
-| id | severity | flags |
-| --- | --- | --- |
-| `INCALL_PHRASING` | BLOCK | incall / hosting phrasing |
-| `REALTIME_LOCATION` | BLOCK | "here now", "in town at", "currently at", "room *N*" |
-| `PRICE_NEAR_OFFER` | BLOCK | a price in the same sentence as what it buys |
-| `DEFENSIVE_PHRASING` | WARN | "no time wasters", "serious inquiries only", … |
-| `EMOJI_HEADLINE` | WARN | more than 2 emoji in the headline |
-| `EMOJI_BODY` | WARN | more than 5 emoji in the body |
-| `BODY_PARAGRAPHS` | WARN | body past three paragraphs |
-| `BOUNDARY_AS_QUESTION` | WARN | a boundary phrased as a question |
-
-One note on `PRICE_NEAR_OFFER`: it pairs a money token with generic duration and
-commerce vocabulary — hour, session, booking, includes, package, and so on. It
-does not ship a vocabulary of services, and adding one would violate the design
-constraint below. If you extend it, extend it with commerce language.
-
----
+The shipped rules currently include checks for real-time location phrasing, price/offer proximity, defensive phrasing, emoji ceilings, paragraph count, and question-shaped boundaries.
 
 ## Design constraints
 
-These are load-bearing. They are not features that were skipped:
+These are intentional boundaries, not missing features:
 
-- **No symbol mapping of any kind.** No emoji substitution, no shorthand, no
-  encoding, no words-to-symbols or symbols-to-words conversion. The app moves
-  text; it does not translate it.
-- **No seeded listing copy.** The app ships with no example content beyond
-  neutral filler. It formats what you write; it does not supply anything to say.
-- **No client data.** No inquiry contents, no other people's handles, no dates
-  tied to individuals. `HeadlineTest` carries an inquiry *count* and no free
-  text field, by design.
-- **No `INTERNET` permission.** There is no network code. The manifest declares
-  no permissions at all. (An APK inspection shows one entry —
-  `com.drafts.compose.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` — which is a
-  signature-level permission AndroidX defines for the app's own broadcast
-  receivers. It grants no system capability.)
-- **No location permission.**
-- **No auto-posting, no platform APIs, no scraping.** The clipboard is the only
-  output path.
-- **No notifications, no alarms.**
-- **No PIN lock, no encrypted database.** It is a notes app and looks like one.
-  Contents are marketing copy, not records. Backup and cloud transfer are both
-  switched off in the manifest.
+- No symbol mapping, shorthand encoding, or words-to-symbols conversion.
+- No seeded listing copy; the app formats what the user writes.
+- No client records or free-text inquiry log.
+- No network stack.
+- No location collection.
+- No automatic publishing.
 
----
+## Build from source
 
-## Building
+Requirements:
 
-### CI (the normal path)
+- JDK 17
+- Android SDK platform 35
 
-Push to any branch. `.github/workflows/build.yml` runs:
-
-1. `./gradlew test` — unit tests. **Red here stops everything.**
-2. `./gradlew assembleDebug` → uploads `drafts-debug`
-3. If signing secrets are present: `./gradlew assembleRelease` → uploads
-   `drafts-release`
-
-Artifacts are on the run page under **Artifacts**.
-
-### Signing secrets
-
-Set these four in **Settings → Secrets and variables → Actions**:
-
-| secret | what |
-| --- | --- |
-| `KEYSTORE_BASE64` | the keystore file, base64-encoded |
-| `KEYSTORE_PASSWORD` | keystore password |
-| `KEY_ALIAS` | key alias |
-| `KEY_PASSWORD` | key password |
-
-To generate a keystore and encode it:
+From the repository root:
 
 ```sh
-keytool -genkey -v -keystore release.jks -keyalg RSA -keysize 2048 \
-        -validity 10000 -alias drafts
-base64 -w 0 release.jks > release.jks.b64   # macOS: base64 -i release.jks -o release.jks.b64
+./gradlew test
+./gradlew assembleDebug
 ```
 
-Paste the contents of `release.jks.b64` into `KEYSTORE_BASE64`. **Keep
-`release.jks` somewhere safe and off this repo** — losing it means no future
-build can update an installed app; it has to be uninstalled and reinstalled,
-which wipes its database. `*.jks`, `*.keystore` and `keystore.properties` are
-gitignored.
+The debug APK is produced under:
 
-Without the secrets the workflow still passes and produces the debug APK only.
-
-### Local build (optional)
-
-Requires an Android SDK with platform 35. Point at it with a `local.properties`
-containing `sdk.dir=/path/to/android-sdk` (gitignored), then `./gradlew test` /
-`./gradlew assembleDebug`. For a local signed release, put a
-`keystore.properties` at the repo root:
-
-```properties
-storeFile=release.jks
-storePassword=…
-keyAlias=drafts
-keyPassword=…
+```text
+app/build/outputs/apk/debug/
 ```
 
----
+## CI and releases
 
-## Sideloading onto the phone
+`.github/workflows/build.yml` runs on pushes, pull requests, and manual dispatch.
 
-The target device is a Samsung A16; anything on API 26+ works.
+The build pipeline:
 
-1. Download the `drafts-release` artifact from the workflow run and unzip it.
-2. Move the `.apk` to the phone (USB, or any transfer you already use).
-3. On the phone, open the file. Android will ask to allow installs from
-   whichever app is opening it — **Settings → Apps → [that app] → Install
-   unknown apps** — and then install.
-4. It appears in the launcher as **Drafts**.
+1. Runs the unit tests.
+2. Builds the debug APK.
+3. Builds a signed release APK when signing secrets are present.
+4. Publishes the current APK to the stable `compose-latest` GitHub Release.
 
-Every update must be signed with the *same* keystore or Android refuses to
-install over the existing app.
+A failing test stops the build before release publication.
 
-Debug and release builds have different application IDs
-(`com.drafts.compose.debug` vs `com.drafts.compose`) so both can sit on the
-device at once without one overwriting the other's data.
+## Maintainer: configure release signing
 
----
+The workflow expects four **repository-level GitHub Actions secrets**:
 
-## Layout
+| Secret | Value |
+| --- | --- |
+| `KEYSTORE_BASE64` | base64-encoded Android signing keystore |
+| `KEYSTORE_PASSWORD` | keystore password |
+| `KEY_ALIAS` | signing-key alias |
+| `KEY_PASSWORD` | signing-key password |
 
+In GitHub, open **Settings → Secrets and variables → Actions → New repository secret** and add each value separately.
+
+If an existing production build has already been distributed, preserve and reuse its original signing keystore. Android treats the signing key as application identity; replacing it prevents the new APK from updating an installed copy signed by the old key.
+
+For a first production key, one standard JDK command is:
+
+```sh
+keytool -genkeypair -v \
+  -keystore drafts-release.jks \
+  -alias drafts \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000
 ```
+
+Then encode the keystore as one line:
+
+```sh
+base64 -w 0 drafts-release.jks > drafts-release.jks.b64
+```
+
+Use the contents of `drafts-release.jks.b64` as `KEYSTORE_BASE64`. Keep the original `.jks` and its passwords in durable offline backup. **Never commit the keystore, its base64 representation, or its passwords to this repository.**
+
+After adding the secrets, manually re-run the `build` workflow. The next successful run will publish `Drafts-current.apk` on the stable release page.
+
+## Project structure
+
+```text
 app/src/main/java/com/drafts/compose/
-  core/                     pure Kotlin, no Android imports — this is what the tests cover
-    Findings.kt             Severity, FieldId, Finding, display ordering
-    ScopedText.kt           joined text ⇄ source field offset mapping
-    TextScan.kt             sentence / paragraph / emoji segmentation
-    render/Renderer.kt      per-register reshaping and character counts
-    lint/LintRules.kt       ← the rules file
-    lint/LintEngine.kt      four rule shapes, no subject-matter knowledge
+  core/                     pure Kotlin checking/rendering logic
+    Findings.kt
+    ScopedText.kt
+    TextScan.kt
+    render/Renderer.kt
+    lint/LintRules.kt
+    lint/LintEngine.kt
     check/ConsistencyChecker.kt
-    check/Checks.kt         both passes, one report
-    tests/TestGuard.kt      the one-variable rule
-  data/                     Room: entities, DAOs, seeding, migration scaffolding
+    check/Checks.kt
+    tests/TestGuard.kt
+  data/                     Room entities, DAOs, migrations
   ui/                       single activity, four fragments, ViewBinding
-app/src/test/               137 unit tests, all against core/
+app/src/test/               unit tests for core logic
 ```
 
-Migrations are **additive only** — see `data/Migrations.kt` for the convention
-and the template. `fallbackToDestructiveMigration` is deliberately never called:
-a missing migration should crash in testing, not wipe drafts in the field.
-Schemas are exported to `app/schemas/` and committed so migrations can be
-diffed.
+Database migrations are additive. `fallbackToDestructiveMigration` is deliberately not used; a missing migration should fail during development rather than silently wipe user data.
+
+## License
+
+No open-source license is currently declared in this repository. Public source visibility does not, by itself, grant reuse or redistribution rights beyond what applicable law provides.
